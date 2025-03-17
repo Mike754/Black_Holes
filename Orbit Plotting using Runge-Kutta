@@ -1,0 +1,132 @@
+#Imports
+from mpl_toolkits import mplot3d
+%matplotlib inline
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+
+# Numerical Integration for r_lambda
+t_o = 1
+x_o = 100
+h = 1
+M = 1
+H = 1
+epsilon = 1 # 1 for timelike geodesics, 0 for null geodesics
+E = 10
+# stable orbit function for E for any constant x_o: np.sqrt((1-2*M/x_o)*(epsilon+(H**2/x_o**2)))
+
+def f1(t, x): 
+    term = E**2 - (1 - 2*M/x)*(epsilon + (H**2/x**2))
+    if term < 0:
+        return 0  # Or handle it appropriately
+    return np.sqrt(term)
+
+# Runge-Kutta method
+t_end = 70000
+
+t_rk = [t_o]
+x_rk = [x_o]
+
+def RungeKutta(t, x, h): 
+    k1q = f1(t, x)
+    k2q = f1(t + 0.5 * h, x + 0.5 * h * k1q)  
+    k3q = f1(t + 0.5 * h, x + 0.5 * h * k2q)
+    k4q = f1(t + h, x + h * k3q)
+
+    # Update the values for position and velocity
+    x_new = x + (h/6) * (k1q + 2*k2q + 2*k3q + k4q)
+    
+    return x_new, t + h
+
+# Initial conditions for r_lambda
+x = x_o
+t = t_o
+
+# Ensure that values do not overflow
+while t <= t_end:
+    x, t = RungeKutta(t, x, h)
+    
+    # Break if values exceed reasonable limits
+    if abs(x) > 1e100:
+        print("Overflow detected at time {t}, position {x}")
+        break
+    
+    t_rk.append(t) 
+    x_rk.append(x) 
+# function for phi_lambda
+def f2(t, x_rk, i): 
+    return H / x_rk[i-1]**2  
+
+# Runge-Kutta method for second integration
+t2_o = t_o
+x2_o = np.pi
+t_end2 = t_end
+
+t2_rk = [t2_o]
+x2_rk = [x2_o]
+
+def RungeKutta_2(t, x2, h, i): 
+    k1r = f2(t, x2_rk, i)
+    k2r = f2(t + 0.5 * h, x2_rk, i + 1)  # Update index i for next iteration
+    k3r = f2(t + 0.5 * h, x2_rk, i + 1)
+    k4r = f2(t + h, x2_rk, i + 1)
+
+    # Update the values for position and velocity
+    x_new2 = x2 + (h/6) * (k1r + 2*k2r + 2*k3r + k4r)
+    
+    return x_new2, t + h
+
+# Initial conditions for second integration
+x2 = x2_o
+t2 = t2_o
+
+# Ensure that values do not overflow
+while t2 <= t_end2:
+    x2, t2 = RungeKutta_2(t2, x2, h, len(t2_rk) - 1)  # Pass current index for x_rk
+    
+    # Break if values exceed reasonable limits
+    if abs(x2) > 1e100:
+        print(f"Overflow detected at time {t2}, position {x2}")
+        break
+    
+    t2_rk.append(t2) 
+    x2_rk.append(x2) 
+
+plt.plot(t_rk, x_rk, color = "darkorange")
+plt.plot(t_rk, x2_rk, color = "teal")
+plt.show
+
+X = x_rk*np.cos(x2_rk)
+Y = x_rk*np.sin(x2_rk) 
+
+plt.plot(X,Y, color = 'deeppink')
+plt.axis('equal') 
+ax = plt.gca()
+#ax.set_facecolor("black")
+plt.scatter(0, 0, color= 'black', zorder=5, s = 2*M) 
+plt.show
+
+u = np.linspace(0, 2 * np.pi, 100)
+v = np.linspace(0, np.pi, 100)
+size = 50000
+x = size* np.outer(np.cos(u), np.sin(v))
+y = size* np.outer(np.sin(u), np.sin(v))
+z = size * np.outer(np.ones(np.size(u)), np.cos(v))
+lim = 600000
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+#ax.set_xlabel('X')
+#ax.set_ylabel('Y')
+#ax.set_zlabel('Z')
+ax.set_title("Schwarzschild Black Hole Orbit")
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_zticks([])
+ax.plot_surface(x, y, z, color='black')
+ax.plot3D(X, Y, 0, color='deeppink')
+ax.set_xlim([-lim, lim]) 
+ax.set_ylim([-lim, lim]) 
+ax.set_zlim([-lim, lim])
+ax.set_box_aspect(aspect = (4,4,4))
+plt.show()
