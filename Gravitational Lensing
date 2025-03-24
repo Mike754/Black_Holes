@@ -1,0 +1,70 @@
+#Imports
+from mpl_toolkits import mplot3d
+%matplotlib inline
+import matplotlib.pyplot as plt
+import numpy as np
+import math as mat
+
+
+
+# Constants
+R = 1 # source radius
+Rs = 1  # Schwarzchild radius
+D_LS = 1  # distance from lens to source
+D_L = 1 # Distance from lens
+D_S = D_LS + D_L  # distance from source
+h = 1  # offset for the source angle
+
+r_object = []
+beta_object = []
+
+
+def calculate_beta(r, D_S, h):
+    r_new = r + h
+    beta_new = np.arctan(r_new / D_S)
+    return r_new, beta_new
+
+r_new, beta_new = calculate_beta(R, D_S, h)
+r_object.append(r_new)
+beta_object.append(beta_new)
+
+
+def lensing(Rs, D_LS, D_L, D_S, theta_new): 
+  
+    theta_E = np.sqrt(2 * Rs * (D_LS / (D_S * D_L))) 
+    
+   
+    theta1 = 0.5 * (theta_new + np.sqrt(theta_new**2 + 4 * theta_E**2))
+    theta2 = 0.5 * (theta_new - np.sqrt(theta_new**2 + 4 * theta_E**2))
+
+    return theta1, theta2
+
+theta_new = beta_object[0]  
+
+theta1, theta2 = lensing(Rs, D_LS, D_L, D_S, theta_new)
+
+r_values = np.linspace(0.1, 5, 100) 
+
+
+theta1_values = []
+theta2_values = []
+
+for r in r_values:
+
+    _, beta_new = calculate_beta(r, D_S, h)
+    
+    theta1, theta2 = lensing(Rs, D_LS, D_L, D_S, beta_new)
+
+    theta1_values.append(theta1)
+    theta2_values.append(theta2)
+
+
+plt.figure(figsize=(8, 6))
+plt.plot(r_values, theta1_values, label=r'$\theta_1$', color='blue')
+plt.plot(r_values, theta2_values, label=r'$\theta_2$', color='red')
+plt.xlabel('source radius r')
+plt.ylabel('Deflection Angles $\theta_1$ and $\theta_2$')
+plt.title('Gravitational Lensing Effect')
+plt.legend()
+plt.grid(True)
+plt.show()
