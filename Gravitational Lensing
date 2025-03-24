@@ -1,70 +1,63 @@
 #Imports
 from mpl_toolkits import mplot3d
 %matplotlib inline
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import numpy as np
 import math as mat
 
+#This was modified from Kushal Pokhrel's "Visualization of Black Holes and Gravitational Lensing Using Python and Plotly" 
+# Origional code at : https://kushalpokhrel.medium.com/visualization-of-black-holes-and-gravitational-lensing-using-python-and-plotly-418ee5e48cfb
 
+#Create a grid of points
+size = 100
+x = np.linspace(-2, 2, size)
+y = np.linspace(-2, 2, size)
+X, Y = np.meshgrid(x, y)
 
-# Constants
-R = 1 # source radius
-Rs = 1  # Schwarzchild radius
-D_LS = 1  # distance from lens to source
-D_L = 1 # Distance from lens
-D_S = D_LS + D_L  # distance from source
-h = 1  # offset for the source angle
+Rs = 1
+D_S = 1
+D_L = 1
+D_LS = D_S+D_L
 
-r_object = []
-beta_object = []
-
-
-def calculate_beta(r, D_S, h):
-    r_new = r + h
-    beta_new = np.arctan(r_new / D_S)
-    return r_new, beta_new
-
-r_new, beta_new = calculate_beta(R, D_S, h)
-r_object.append(r_new)
-beta_object.append(beta_new)
-
-
-def lensing(Rs, D_LS, D_L, D_S, theta_new): 
-  
+# Define the gravitational lensing effect
+def gravitational_lens(x, y, mass=1):
+    r = np.sqrt(x**2 + y**2)
+    beta = np.arctan2(y, x)
     theta_E = np.sqrt(2 * Rs * (D_LS / (D_S * D_L))) 
-    
    
-    theta1 = 0.5 * (theta_new + np.sqrt(theta_new**2 + 4 * theta_E**2))
-    theta2 = 0.5 * (theta_new - np.sqrt(theta_new**2 + 4 * theta_E**2))
-
-    return theta1, theta2
-
-theta_new = beta_object[0]  
-
-theta1, theta2 = lensing(Rs, D_LS, D_L, D_S, theta_new)
-
-r_values = np.linspace(0.1, 5, 100) 
-
-
-theta1_values = []
-theta2_values = []
-
-for r in r_values:
-
-    _, beta_new = calculate_beta(r, D_S, h)
+    theta1 = 0.5 * (beta + np.sqrt(abs(beta**2 - 4 * theta_E**2)))
+    theta2 = 0.5 * (beta - np.sqrt(abs(beta**2 - 4 * theta_E**2)))
     
-    theta1, theta2 = lensing(Rs, D_LS, D_L, D_S, beta_new)
+    deflection = mass / r
+    x1_new = x - deflection * np.cos(theta1)
+    y1_new = y - deflection * np.sin(theta1)
+    x2_new = x - deflection * np.cos(theta2)
+    y2_new = y - deflection * np.sin(theta2)
+    
+    return x1_new, y1_new, x2_new, y2_new
 
-    theta1_values.append(theta1)
-    theta2_values.append(theta2)
+#Apply gravitational lensing effect
+X1_lens, Y1_lens, X2_lens, Y2_lens = gravitational_lens(X, Y)
+
+#Create a figure
+fig = go.Figure()
+
+#Add the original grid as a scatter plot
+fig.add_trace(go.Scatter(x=X.flatten(), y=Y.flatten(), mode='markers', marker=dict(color='blue', size=3)))
+
+#Add a lensed grid as a scatter plot
+fig.add_trace(go.Scatter(x=X1_lens.flatten(), y=Y1_lens.flatten(), mode='markers', marker=dict(color='red', size=3)))
+fig.add_trace(go.Scatter(x=X2_lens.flatten(), y=Y2_lens.flatten(), mode='markers', marker=dict(color='orange', size=3)))
+
+#Set layout
+fig.update_layout(title='Gravitational Lensing Simulation', xaxis_title='X', yaxis_title='Y')
+
+fig.update_layout(
+    margin=dict(l=20, r=20, t=20, b=20),
+    paper_bgcolor="LightSteelBlue",
+)
 
 
-plt.figure(figsize=(8, 6))
-plt.plot(r_values, theta1_values, label=r'$\theta_1$', color='blue')
-plt.plot(r_values, theta2_values, label=r'$\theta_2$', color='red')
-plt.xlabel('source radius r')
-plt.ylabel('Deflection Angles $\theta_1$ and $\theta_2$')
-plt.title('Gravitational Lensing Effect')
-plt.legend()
-plt.grid(True)
-plt.show()
+#Show the plot
+fig.show()
