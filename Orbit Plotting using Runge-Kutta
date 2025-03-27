@@ -6,127 +6,127 @@ import numpy as np
 import math
 
 # Numerical Integration for r_lambda
-t_o = 1
-x_o = 100
-h = 1
-M = 1
-H = 1
-epsilon = 1 # 1 for timelike geodesics, 0 for null geodesics
-E = 10
-# stable orbit function for E for any constant x_o: np.sqrt((1-2*M/x_o)*(epsilon+(H**2/x_o**2)))
+t_o = 1 #initial time
+r_o = 1 # initial radius
+h = 0.1 # step size
+M = 100 #black hole mass
+H = 1 #momentum
+epsilon = 0 # 1 for timelike geodesics, 0 for null geodesics
+E = 1 #energy
 
-def f1(t, x): 
-    term = E**2 - (1 - 2*M/x)*(epsilon + (H**2/x**2))
+# stable orbit function for E for any constant x_o: np.sqrt((1-2*M/r_o)*(epsilon+(H**2/r_o**2)))
+
+#function for radial distance, r: 
+def f1(t, r): 
+    term = E**2 - (1 - 2*M / r) * (epsilon + (H**2/(r**2)))
     if term < 0:
-        return 0  # Or handle it appropriately
+        return - np.sqrt(-term)
     return np.sqrt(term)
-
+    
 # Runge-Kutta method
-t_end = 70000
-
+t_end = 750
 t_rk = [t_o]
-x_rk = [x_o]
+r_rk = [r_o]
 
-def RungeKutta(t, x, h): 
-    k1q = f1(t, x)
-    k2q = f1(t + 0.5 * h, x + 0.5 * h * k1q)  
-    k3q = f1(t + 0.5 * h, x + 0.5 * h * k2q)
-    k4q = f1(t + h, x + h * k3q)
+def RungeKutta(t, r, h): 
+    k1q = f1(t, r)
+    k2q = f1(t + 0.5 * h, r + 0.5 * h * k1q)  
+    k3q = f1(t + 0.5 * h, r + 0.5 * h * k2q)
+    k4q = f1(t + h, r + h * k3q)
 
     # Update the values for position and velocity
-    x_new = x + (h/6) * (k1q + 2*k2q + 2*k3q + k4q)
+    r_new = r + (h/6) * (k1q + 2*k2q + 2*k3q + k4q)
     
-    return x_new, t + h
+    return r_new, t + h
 
 # Initial conditions for r_lambda
-x = x_o
+r = r_o
 t = t_o
 
-# Ensure that values do not overflow
 while t <= t_end:
-    x, t = RungeKutta(t, x, h)
-    
-    # Break if values exceed reasonable limits
-    if abs(x) > 1e100:
-        print("Overflow detected at time {t}, position {x}")
-        break
-    
+    r, t = RungeKutta(t, r, h)
     t_rk.append(t) 
-    x_rk.append(x) 
+    r_rk.append(r) 
+    
 # function for phi_lambda
-def f2(t, x_rk, i): 
-    return H / x_rk[i-1]**2  
+def f2(t, r_rk, i): 
+    return H / r_rk[i-1]**2  
 
 # Runge-Kutta method for second integration
 t2_o = t_o
-x2_o = np.pi
+lambda_o = 1
 t_end2 = t_end
-
 t2_rk = [t2_o]
-x2_rk = [x2_o]
+lambda_rk = [lambda_o]
 
-def RungeKutta_2(t, x2, h, i): 
-    k1r = f2(t, x2_rk, i)
-    k2r = f2(t + 0.5 * h, x2_rk, i + 1)  # Update index i for next iteration
-    k3r = f2(t + 0.5 * h, x2_rk, i + 1)
-    k4r = f2(t + h, x2_rk, i + 1)
+def RungeKutta_2(t, lambda_, h, i): 
+    k1r = f2(t, lambda_rk, i)
+    k2r = f2(t + 0.5 * h, lambda_rk, i + 1)  # Update index i for next iteration
+    k3r = f2(t + 0.5 * h, lambda_rk, i + 1)
+    k4r = f2(t + h, lambda_rk, i + 1)
 
     # Update the values for position and velocity
-    x_new2 = x2 + (h/6) * (k1r + 2*k2r + 2*k3r + k4r)
+    lambda_new = lambda_ + (h/6) * (k1r + 2*k2r + 2*k3r + k4r)
     
-    return x_new2, t + h
+    return lambda_new, t + h
 
 # Initial conditions for second integration
-x2 = x2_o
+lambda_ = lambda_o
 t2 = t2_o
 
 # Ensure that values do not overflow
 while t2 <= t_end2:
-    x2, t2 = RungeKutta_2(t2, x2, h, len(t2_rk) - 1)  # Pass current index for x_rk
-    
-    # Break if values exceed reasonable limits
-    if abs(x2) > 1e100:
-        print(f"Overflow detected at time {t2}, position {x2}")
-        break
+    lambda_, t2 = RungeKutta_2(t2, lambda_, h, len(t2_rk) - 1)  # Pass current index for x_rk
     
     t2_rk.append(t2) 
-    x2_rk.append(x2) 
+    lambda_rk.append(lambda_) 
 
-plt.plot(t_rk, x_rk, color = "darkorange")
-plt.plot(t_rk, x2_rk, color = "teal")
-plt.show
+#Parameterisation of radius and angle in cartesian coordinates for better visualisation
+X = r_rk*np.cos(lambda_rk)
+Y = r_rk*np.sin(lambda_rk) 
 
-X = x_rk*np.cos(x2_rk)
-Y = x_rk*np.sin(x2_rk) 
+#Plot of radius and angle as a function of time
+plt.plot(t_rk, r_rk)
+plt.plot(t2_rk, lambda_rk)
+plt.show()
 
-plt.plot(X,Y, color = 'deeppink')
-plt.axis('equal') 
-ax = plt.gca()
-#ax.set_facecolor("black")
-plt.scatter(0, 0, color= 'black', zorder=5, s = 2*M) 
-plt.show
-
+#2D plot in X-Y plane
+lim = 250 #axes limits
+#Image of circle representing black hole
 u = np.linspace(0, 2 * np.pi, 100)
 v = np.linspace(0, np.pi, 100)
-size = 50000
+x = size* np.outer(np.cos(u), np.sin(v))
+y = size* np.outer(np.sin(u), np.sin(v))
+size = 2*M
+plt.xlim([-lim, lim]) 
+plt.ylim([-lim, lim]) 
+plt.plot(x, y, color='black', alpha = 0.1)
+plt.plot(X,Y, color = 'darkorange')
+plt.axis('equal') 
+ax = plt.gca()
+plt.show
+
+#3D plot in X-Y-Z plane for better visualisation 
+size = 2*M
+#Image of spherical Schwarzschild black hole
+u = np.linspace(0, 2 * np.pi, 100)
+v = np.linspace(0, np.pi, 100)
 x = size* np.outer(np.cos(u), np.sin(v))
 y = size* np.outer(np.sin(u), np.sin(v))
 z = size * np.outer(np.ones(np.size(u)), np.cos(v))
-lim = 600000
-
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-#ax.set_xlabel('X')
-#ax.set_ylabel('Y')
-#ax.set_zlabel('Z')
 ax.set_title("Schwarzschild Black Hole Orbit")
-ax.set_xticks([])
-ax.set_yticks([])
-ax.set_zticks([])
-ax.plot_surface(x, y, z, color='black')
-ax.plot3D(X, Y, 0, color='deeppink')
+ax.set_xlabel("X Axis")
+ax.set_ylabel("Y Axis")
+ax.plot_surface(x, y, z, color='black', alpha = 0.25)
+ax.plot3D(X, Y, 0, color='darkorange')
+#ax.set_facecolor('black')
+ax.axes.xaxis.set_ticklabels([])
+ax.axes.yaxis.set_ticklabels([])
+ax.axes.zaxis.set_ticklabels([])
 ax.set_xlim([-lim, lim]) 
 ax.set_ylim([-lim, lim]) 
 ax.set_zlim([-lim, lim])
-ax.set_box_aspect(aspect = (4,4,4))
+ax.set_box_aspect(aspect = (1,1,1))
 plt.show()
