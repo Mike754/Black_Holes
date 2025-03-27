@@ -1,63 +1,86 @@
-#Imports
-from mpl_toolkits import mplot3d
-%matplotlib inline
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import numpy as np
-import math as mat
+#Circle of points approximating a spherical object. The lensing function essentially takes this background of points and projects 
+#The lensed points in the graph. I do not include the origional points in the graph because they look ugly and cluttered.
+# Code was modified from: 
+https://kushalpokhrel.medium.com/visualization-of-black-holes-and-gravitational-lensing-using-python-and-plotly-418ee5e48cfb
 
-#This was modified from Kushal Pokhrel's "Visualization of Black Holes and Gravitational Lensing Using Python and Plotly" 
-# Origional code at : https://kushalpokhrel.medium.com/visualization-of-black-holes-and-gravitational-lensing-using-python-and-plotly-418ee5e48cfb
+#Circle of points
+circle_center_x = 0
+circle_center_y = 0  
+circle_radius = 1
+size = 100 # Number of points to plot in the circle - WARNING ! this does NOT like running at over 100 points, it will, bt it will take a logn time and
+#maybe crash. It does look better with more points though. 
 
-#Create a grid of points
-size = 100
-x = np.linspace(-2, 2, size)
-y = np.linspace(-2, 2, size)
-X, Y = np.meshgrid(x, y)
+theta = np.linspace(0, 2*np.pi, size) 
+circle_x = circle_center_x + circle_radius * np.cos(theta) #
+circle_y = circle_center_y + circle_radius * np.sin(theta)
+#x = np.linspace(-2, 2, size)
+#y = np.linspace(-2, 2, size)
+#X, Y = np.meshgrid(x, y)
+#X and Y will be iniutted into the function
+X, Y = np.meshgrid(circle_x, circle_y)
 
-Rs = 1
-D_S = 1
-D_L = 1
-D_LS = D_S+D_L
+#Constants
+Rs = 1 #Schwarzschild radius
+D_S = 1 #Distance from source 
+D_L = 1 #Distance from lens
+D_LS = D_S + D_L #Total distance
+mass = 1 #mass of the black hole
 
-# Define the gravitational lensing effect
-def gravitational_lens(x, y, mass=1):
+#Lensing funciton
+def gravitational_lens(x, y, mass):
     r = np.sqrt(x**2 + y**2)
-    beta = np.arctan2(y, x)
-    theta_E = np.sqrt(2 * Rs * (D_LS / (D_S * D_L))) 
-   
-    theta1 = 0.5 * (beta + np.sqrt(abs(beta**2 - 4 * theta_E**2)))
-    theta2 = 0.5 * (beta - np.sqrt(abs(beta**2 - 4 * theta_E**2)))
-    
-    deflection = mass / r
-    x1_new = x - deflection * np.cos(theta1)
-    y1_new = y - deflection * np.sin(theta1)
-    x2_new = x - deflection * np.cos(theta2)
-    y2_new = y - deflection * np.sin(theta2)
-    
+    beta = np.arctan2(y, x) 
+    theta_E = np.sqrt(2 * Rs * (D_LS / (D_S * D_L))) #This is the equation for the Einstein angle
+
+    theta1 = (beta + np.sqrt(abs(beta**2 - 4 * theta_E**2))) #These are solutions to the angle equation, it's a quadratic so there are 2 root solutions for 
+    theta2 = (beta - np.sqrt(abs(beta**2 - 4 * theta_E**2))) # 2 images. 
+
+    deflection = mass / r #deflection due to mass
+    x1_new = x - deflection * np.cos(theta1+np.pi/5) #These are the new coordinates from teh origional grid of points
+    y1_new = y - deflection * np.sin(theta1+np.pi/5)
+    x2_new = x - deflection * np.cos(theta2-np.pi/5)
+    y2_new = y - deflection * np.sin(theta2-np.pi/5)
+
     return x1_new, y1_new, x2_new, y2_new
 
-#Apply gravitational lensing effect
-X1_lens, Y1_lens, X2_lens, Y2_lens = gravitational_lens(X, Y)
+X1_lens, Y1_lens, X2_lens, Y2_lens = gravitational_lens(X, Y, mass)
 
-#Create a figure
+#The rest of this is just plotting stuff to make it look beautiful 
+
 fig = go.Figure()
 
-#Add the original grid as a scatter plot
-fig.add_trace(go.Scatter(x=X.flatten(), y=Y.flatten(), mode='markers', marker=dict(color='blue', size=3)))
+# Origional grid commented out for clarity
+#fig.add_trace(go.Scatter(x=X.flatten(), y=Y.flatten(), mode='markers', marker=dict(color='black', size=3)))
 
-#Add a lensed grid as a scatter plot
-fig.add_trace(go.Scatter(x=X1_lens.flatten(), y=Y1_lens.flatten(), mode='markers', marker=dict(color='red', size=3)))
-fig.add_trace(go.Scatter(x=X2_lens.flatten(), y=Y2_lens.flatten(), mode='markers', marker=dict(color='orange', size=3)))
+# Add a lensed grid as a scatter plot
+fig.add_trace(go.Scatter(x=X1_lens.flatten(), y=Y1_lens.flatten(), mode='markers', marker=dict(color='#ff7f0e', size=3)))
+fig.add_trace(go.Scatter(x=X2_lens.flatten(), y=Y2_lens.flatten(), mode='markers', marker=dict(color='#ff7f0e', size=3)))
 
-#Set layout
+#This is just to make the figure look good 
 fig.update_layout(title='Gravitational Lensing Simulation', xaxis_title='X', yaxis_title='Y')
-
 fig.update_layout(
-    margin=dict(l=20, r=20, t=20, b=20),
-    paper_bgcolor="LightSteelBlue",
+    title='Gravitational Lensing Simulation with Circle of Blue Points',
+    xaxis_title='X',
+    yaxis_title='Y',
+    margin=dict(l=5, r=5, t=5, b=5),
+    paper_bgcolor="floralwhite",
+    plot_bgcolor = "black", 
+    width=800,
+    height=800,  
+    xaxis=dict(scaleanchor="y"), 
+    polar_radialaxis_gridcolor="#ff0000", 
+    polar_angularaxis_gridcolor="#0000ff", 
+)
+fig.update_xaxes(showgrid=False)
+fig.update_yaxes(showgrid=False)
+
+#Plotting circle, there are no points behind it, it's mainly here to block out the white axes so teh figure is more clear. 
+fig.add_shape(type="circle",
+    xref="x", yref="y",
+    fillcolor="black",
+    x0=-2, y0=-2, x1=2, y1=2,
+    line_color="firebrick",
 )
 
-
-#Show the plot
+# Show the plot
 fig.show()
