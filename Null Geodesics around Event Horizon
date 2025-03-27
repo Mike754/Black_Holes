@@ -1,0 +1,25 @@
+#Null geodesics outside schwarzchild black hole
+def Geodesics(r, M, constant):
+    if r != 2*M: 
+        return constant + 2 * (r + 2 * M * np.log(np.abs(r / (2 * M) - 1))) #This is the null geodesic path solved in Hartle
+    else: 
+        return np.nan # if r = 2M, then the geodesics will be constant in space. 
+
+M = 1  # mass
+constants = [-15, -10, -5, 0, 5, 10, 15, 20, 25, 30]  # sample constants, for demonstration purposes
+
+# r values
+r_values = np.linspace(0.1, 2*M, 1000)  # r < 2M
+r_values = np.concatenate([r_values, np.linspace(2*M, 4*M, 1000)])  # r > 2M, 
+
+# Plot
+plt.figure(figsize=(8, 6))
+for constant in constants:
+    v_values = [Geodesics(r, M, constant) for r in r_values]
+    plt.plot(r_values, v_values)
+plt.axvline(x=2*M, color='black', linestyle='--', label='Event Horizon')
+plt.xlabel('Radial Distance from Singularity')
+plt.ylabel('Time')
+plt.title('Geodesics for Regions of Schwarzchild Black Hole')
+plt.legend()
+plt.show()
