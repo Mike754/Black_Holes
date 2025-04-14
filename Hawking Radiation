@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+ 
+#parameters-
+n = 100 # number of black holes
+M_values = np.linspace ((1*10**26),(1.32*10**40), n) #the range of sizes of black holes where the 
+#lower limit is an ancient priomrodial black hole and the upper limit is a largest black hole "Ton 618"
+ 
+#constants
+h = 1.055*10**-34
+c = 3*10**8
+G = 6.674*10**-11
+K = 1.381*10**-23
+ 
+#define the hawking radiation
+def equation(M):
+    return (h*c**3)/(8*np.pi*K*G*M)
+ 
+#compute the temperature values at different masses
+T_values = equation(M_values)
+ 
+ 
+# plotting graph
+plt.figure(figsize=(8, 5))
+plt.plot(M_values, T_values, label="Hawking temperature", color="red")
+ 
+# titles
+plt.xlabel("Black hole mass (Kg)")
+plt.ylabel("Black hole temperature (K)")
+plt.title("Graph of hawking radiation at differing black hole masses")
+plt.legend()
+plt.grid(True)
+ 
+# Show the graph
+plt.show()
+ 
+ 
+#making a chart
+data = {
+    "Mass (Kg)": [M_values],
+    "Hawking Temperature":[T_values]
+}
+df = pd.DataFrame(data)
+ 
+print(df)
+ 
+ 
+ 
+ 
+SECOND
+
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+ 
+#parameters-
+n = 100 # number of black holes
+M_values = np.linspace ((1*10**26),(1.32*10**40), n) #the range of sizes of black holes where the 
+#lower limit is an ancient priomrodial black hole and the upper limit is a largest black hole "Ton 618"
+ 
+#constants
+h = 1.055*10**-34
+c = 3*10**8
+G = 6.674*10**-11
+K = 1.381*10**-23
+ 
+#define the hawking radiation
+def equation(M):
+    return (h*c**3)/(8*np.pi*K*G*M)
+ 
+#compute the temperature values at different masses
+T_values = equation(M_values)
+ 
+ 
+# plotting graph
+plt.figure(figsize=(8, 5))
+plt.plot(M_values, T_values, label="Hawking temperature", color="red")
+ 
+# titles
+plt.xlabel("Black hole mass (Kg)")
+plt.ylabel("Black hole temperature (K)")
+plt.title("Graph of hawking radiation at differing black hole masses")
+plt.legend()
+plt.grid(True)
+ 
+# Show the graph
+plt.show()
+ 
+ 
+#making a chart
+data = {
+    "Mass (Kg)": [M_values],
+    "Hawking Temperature":[T_values]
+}
+df = pd.DataFrame(data)
+ 
+print(df)
+ 
+ 
+ 
+ 
